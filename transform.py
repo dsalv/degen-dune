@@ -1,5 +1,6 @@
 import json
 import pandas as pd
+import numpy as np
 from datetime import datetime
 
 
@@ -41,7 +42,9 @@ def transform_blocks(blocks_df):
         "total_difficulty_f64",
         "chain_id",
     ]
+    
     blocks_df.drop(columns_to_drop, axis=1, inplace=True)
+    blocks_df = blocks_df.replace({np.nan: None})
 
     # Iterate over DataFrame rows to create ndjson string
     blocks_data = ""
@@ -93,7 +96,7 @@ def transform_transactions(transactions_df):
         "n_input_nonzero_bytes",
     ]
     transactions_df.drop(columns=columns_to_drop, inplace=True)
-    transactions_df.fillna(-1, inplace=True)
+    transactions_df = transactions_df.replace({np.nan: None})
 
     # Iterate over DataFrame rows to create ndjson string
     transactions_data = ""
@@ -146,6 +149,7 @@ def transform_logs(transactions_df, logs_df):
     # Drop unnecessary columns
     # Removed `n_data_bytes` for Sepolia
     logs_df.drop(columns=["chain_id"], inplace=True)
+    logs_df = logs_df.replace({np.nan: None})
 
     # Iterate over DataFrame rows to create ndjson string
     logs_data = ""

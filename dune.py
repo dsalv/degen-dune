@@ -14,7 +14,7 @@ def insert_data(blockchain, table, schema):
         "Content-Type": "application/x-ndjson",
     }
     response = requests.post(url, data=schema, headers=headers)
-    print(response.text, time.time() - start_time)
+    print(f"{blockchain}.{table}:", response.text, time.time() - start_time, "seconds")
 
 
 # Degen specific function
