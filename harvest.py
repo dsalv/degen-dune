@@ -23,18 +23,23 @@ end_block = 5895136  # get_end_block()
 blockchain = "sepolia"
 logger.info("Started harvesting blocks from %s to %s", start_block, end_block)
 
-for start_block in range(start_block, end_block, chunk_size):
+for block_number in range(start_block, end_block, chunk_size):
     if start_block + chunk_size > end_block:
         break
 
-    blocks = get_blocks(start_block, start_block + chunk_size, chunk_size)
-    transactions = get_transactions(start_block, start_block + chunk_size, chunk_size)
-    logs = get_logs(start_block, start_block + chunk_size, chunk_size)
+    blocks = get_blocks(block_number, block_number + chunk_size, chunk_size)
+    transactions = get_transactions(block_number, block_number + chunk_size, chunk_size)
+    logs = get_logs(block_number, block_number + chunk_size, chunk_size)
 
     blocks_data = transform_blocks(blocks)
     transactions_data = transform_transactions(transactions)
     logs_data = transform_logs(transactions, logs)
 
+
+    print("Inserting for block number:", block_number)
+
     insert_data(blockchain, "blocks", blocks_data)
     insert_data(blockchain, "transactions", transactions_data)
     insert_data(blockchain, "logs", logs_data)
+
+    print("\n")
