@@ -5,13 +5,9 @@ from rpc import get_end_block
 from dune import get_start_block
 from dune import insert_data
 
-from cryo_utils import get_blocks
-from cryo_utils import get_transactions
-from cryo_utils import get_logs
+from cryo_utils import get_blocks, get_transactions, get_logs, get_traces
 
-from transform import transform_blocks
-from transform import transform_transactions
-from transform import transform_logs
+from transform import transform_blocks, transform_transactions, transform_logs, transform_traces
 
 
 load_dotenv()
@@ -30,10 +26,12 @@ for block_number in range(start_block, end_block, chunk_size):
     blocks = get_blocks(block_number, block_number + chunk_size, chunk_size)
     transactions = get_transactions(block_number, block_number + chunk_size, chunk_size)
     logs = get_logs(block_number, block_number + chunk_size, chunk_size)
+    traces = get_traces(block_number, block_number + chunk_size)
 
     blocks_data = transform_blocks(blocks)
     transactions_data = transform_transactions(transactions)
     logs_data = transform_logs(transactions, logs)
+    traces_data = transform_traces(traces, transactions)
 
 
     print("Inserting for block number:", block_number)
@@ -41,5 +39,6 @@ for block_number in range(start_block, end_block, chunk_size):
     insert_data(blockchain, "blocks", blocks_data)
     insert_data(blockchain, "transactions", transactions_data)
     insert_data(blockchain, "logs", logs_data)
+    insert_data(blockchain, "traces", traces_data)
 
     print("\n")
