@@ -2,6 +2,7 @@ import json
 import pandas as pd
 import numpy as np
 from datetime import datetime
+from get_model_trace import get_model_trace
 
 
 def transform_blocks(blocks_df):
@@ -156,3 +157,68 @@ def transform_logs(transactions_df, logs_df):
     for _, row in logs_df.iterrows():
         logs_data += json.dumps(row.to_dict()) + "\n"
     return logs_data
+
+
+def transform_traces(traces_df, transactions_df):
+    """
+    Transform traces data from cryo into ndjson accepted by Dune blockchain traces insert endpoint.
+    The transformation was adopted from Richard Chen's Degen indexing script
+
+    Args:
+        traces_df: Pandas dataframe with traces data from cryo.
+    """
+    # Extract the timestamp
+    timestamp = transactions_df["timestamp"].iloc[0]
+
+    # Extract columns needed from transactions
+    traces_df["block_date"] = pd.to_datetime(timestamp, unit="s").strftime("%Y-%m-%d")
+    traces_df["block_time"] = pd.to_datetime(timestamp, unit="s").strftime("%Y-%m-%d %H:%M:%S")
+    traces_df["tx_from"] = transactions_df["from_address"].iloc[0]
+    traces_df["tx_to"] = transactions_df["to_address"].iloc[0]
+
+
+    traces_df = traces_df.rename(
+        columns={
+            "action_value": "value",
+            "action_gas": "gas",
+            "result_gas_used": "gas_used",
+            "action_call_type": "call_type",
+            "action_type": "type",
+            "transaction_index": "tx_index",
+            "subtraces": "sub_traces",
+            "transaction_hash": "tx_hash",
+            "action_from": "from",
+            "action_to": "to",
+            "action_input": "input",
+            "result_output": "output",
+        }
+    )
+
+    columns_to_drop = [
+        "action_init",
+        "action_reward_type",
+        "chain_id",
+        "result_code",
+        "result_address",
+    ]
+
+    traces_df.drop(columns=columns_to_drop, inplace=True)
+    traces_df = traces_df.replace({np.nan: None})
+    
+
+    traces_data = ""
+    for _, row in traces_df.iterrows():
+        # Apply Dune model trace to each trace
+        model_trace = get_model_trace(row.to_dict())
+        row.update(model_trace)
+
+        # Need to convert trace_address into an array of bigint
+        row['trace_address'] = None if not row['trace_address'] else row['trace_address'].split('_')
+        # Need to convert value into uint256, sometimes coming as floats (i.e. '0.0')
+        row['value'] = int(row['value']) if row['value'] else None
+        row['gas'] = int(row['gas']) if row['gas'] else None
+        row['gas_used'] = int(row['gas_used']) if row['gas_used'] else None
+
+        traces_data += json.dumps(row.to_dict()) + "\n"
+
+    return traces_data
