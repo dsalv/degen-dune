@@ -167,14 +167,24 @@ def transform_traces(traces_df, transactions_df):
     Args:
         traces_df: Pandas dataframe with traces data from cryo.
     """
-    # Extract the timestamp
-    timestamp = transactions_df["timestamp"].iloc[0]
+    # Group by 'block_number' and aggregate the other columns
+    transactions_df = transactions_df.groupby('block_number').agg({
+        'timestamp': 'first',
+        'from_address': 'first',
+        'to_address': 'first'
+    })
 
-    # Extract columns needed from transactions
-    traces_df["block_date"] = pd.to_datetime(timestamp, unit="s").strftime("%Y-%m-%d")
-    traces_df["block_time"] = pd.to_datetime(timestamp, unit="s").strftime("%Y-%m-%d %H:%M:%S")
-    traces_df["tx_from"] = transactions_df["from_address"].iloc[0]
-    traces_df["tx_to"] = transactions_df["to_address"].iloc[0]
+    # Create a dictionary from transactions_df
+    transactions_dict = transactions_df[['timestamp', 'from_address', 'to_address']].to_dict('index')
+
+    # Map the values to traces_df
+    traces_df['timestamp'] = traces_df['block_number'].map(lambda x: transactions_dict.get(x, {}).get('timestamp'))
+    traces_df['tx_from'] = traces_df['block_number'].map(lambda x: transactions_dict.get(x, {}).get('from_address'))
+    traces_df['tx_to'] = traces_df['block_number'].map(lambda x: transactions_dict.get(x, {}).get('to_address'))
+
+    # Convert timestamp to block_date and block_time
+    traces_df["block_date"] = pd.to_datetime(traces_df["timestamp"], unit="s").dt.strftime("%Y-%m-%d")
+    traces_df["block_time"] = pd.to_datetime(traces_df["timestamp"], unit="s").dt.strftime("%Y-%m-%d %H:%M:%S")
 
 
     traces_df = traces_df.rename(
@@ -200,6 +210,7 @@ def transform_traces(traces_df, transactions_df):
         "chain_id",
         "result_code",
         "result_address",
+        "timestamp",
     ]
 
     traces_df.drop(columns=columns_to_drop, inplace=True)
