@@ -34,7 +34,7 @@ for block_number in range(start_block, end_block, chunk_size):
     traces_data = transform_traces(traces, transactions)
 
 
-    print("Inserting for block number:", block_number)
+    print("Inserting for block numbers:", block_number, block_number+chunk_size-1)
 
     insert_data(blockchain, "blocks", blocks_data)
     insert_data(blockchain, "transactions", transactions_data)
