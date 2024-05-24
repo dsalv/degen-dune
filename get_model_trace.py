@@ -1,4 +1,13 @@
 def get_model_trace(trace: dict) -> dict:
+    """
+    Convert trace data from cryo into a model trace object.
+    This transformation is consistent with how Dune indexes traces.
+    
+    @param trace: dict: A trace object from cryo.
+    
+    @return: dict: A model trace object.
+    """
+
     type = trace.get("type", None)
     type = type.upper() if type else None
 
