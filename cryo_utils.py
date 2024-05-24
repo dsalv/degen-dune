@@ -53,6 +53,32 @@ TRANSACTIONS_COLUMNS = [
 ]
 
 
+TRACES_COLUMNS = [
+    "block_number",
+    "block_hash",
+
+    "action_value",
+    "action_gas",
+    "result_gas_used",
+    "action_call_type",
+    # "success",
+    # "revert_reason",
+    "error",
+    # "tx_success",
+    "action_type",
+    "transaction_index",
+    "subtraces",
+    "transaction_hash",
+    "action_from",
+    "action_to",
+    "trace_address",
+    "result_address",
+    "result_code",
+    "action_input",
+    "result_output",
+]
+
+
 def get_blocks(start_block, end_block, chunk_size):
     """
     Get blocks data for blocks table.
@@ -123,3 +149,27 @@ def get_logs(start_block, end_block, chunk_size):
         no_report=True,
     )
     return logs
+
+
+def get_traces(start_block, end_block):
+    """
+    Get traces for traces table.
+
+    Args:
+        start_block: start block for the queried data.
+        end_block: end block for the queried data.
+        chunk_size: chunk size for the exported data. (Note: function will error if chunk_size is not within start_block and end_block)
+
+    Returns:
+        traces: Pandas dataframe with traces.
+    """
+    traces = cryo.collect(
+        "traces",
+        blocks=[f"{start_block}:{end_block}"],
+        rpc=CHAIN_RPC,
+        output_format="pandas",
+        hex=True,
+        include_columns=TRACES_COLUMNS,
+        no_report=True,
+    )
+    return traces
